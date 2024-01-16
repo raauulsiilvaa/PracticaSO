@@ -6,13 +6,24 @@
 #include <string.h>
 #include <signal.h>
 
+#define MEM_SIZE 16777216   // Tamaño total de la memoria física (2^24 bytes)
+#define WORD_SIZE 4         // Tamaño de una palabra en bytes
+#define KERNEL_SIZE 1048576 // Tamaño reservado para el Kernel (1 MB)
+
 
 //Estrucuturas Necesarias
+
+struct MemoryManagement {
+    void* code;   // Puntero a la dirección virtual de comienzo del segmento de código.
+    void* data;   // Puntero a la dirección virtual de comienzo del segmento de datos.
+    void* pgb;    // Puntero a la dirección física de la correspondiente tabla de páginas.
+};
 
 struct PCB {
     int PID;
     char state[15];
-    int priority;
+    int remainingTime;
+   // struct MemoryManagement mm;
     struct PCB* next;
 };
 
@@ -24,16 +35,39 @@ struct ProcessQueue {
 struct Thread {
     int tid;
     struct PCB* process;
+    // struct MMU* mmu; //Traduccion las direcciones virtuales a direccciones fisicas
+    // void* ptbr;  // Registro apuntador a la tabla de páginas (PTBR)
+    // int RI; //Instruccion actual
+    // void* PC; //DIreccion de la proxima instruccion
 };
 
 struct Core {
     int core_id;        
-    struct Thread* threads;    
+    struct Thread* threads;
 };
 
 struct CPU {
     int cpu_id;    
     struct Core* cores;   
+};
+
+struct TLBEntry {
+    int virtualPageNumber;  // Número de página virtual
+    int frameNumber;        // Número de marco en memoria física
+    int valid;              // Bit de validez
+};
+
+struct MMU {
+    struct TLBEntry* tlb;
+};
+
+struct PhysicalMemory {
+    int memory[MEM_SIZE];  // Array memoria física
+};
+
+struct VirtualMemory {
+    char *memory;  // Puntero a la memoria virtual
+    size_t size;            // Tamaño total de la memoria
 };
 
 
@@ -52,6 +86,7 @@ struct CPU* CPUsMachine;
 
 int randPID = 0;
 
+struct PhysicalMemory physicalMemory;
 
 void initializeProcessQueue(struct ProcessQueue* myQueue){
     myQueue->first = NULL;
@@ -69,6 +104,38 @@ void addPCB(struct ProcessQueue* myQueue, struct PCB* pcb){
         }
 
     myQueue->last->next = myQueue->first;
+}
+
+void deletePCB(struct ProcessQueue* myQueue, struct PCB* pcb){    
+
+    if(myQueue->first != NULL && pcb != NULL){
+        if (pcb->next == pcb){
+            myQueue->first = NULL;
+            myQueue->last = NULL;
+
+        }else if (myQueue->first == pcb){
+            myQueue->first = pcb->next;
+            myQueue->last->next = myQueue->first;
+
+        }else {
+            struct PCB *aux = myQueue->first;
+            while (aux->next != pcb){
+                aux = aux->next;
+            }
+            if (aux->next == myQueue->last){
+                aux->next = myQueue->first;
+                myQueue->last = aux;
+                printf("ID: %d", myQueue->last->PID);
+            }else{
+                aux->next = pcb->next;
+            }
+        }
+        pcb->next = NULL;
+    }
+    else{
+        printf("Delete incorrecto");
+    }
+
 }
 
  // Funciones necesarias
@@ -148,12 +215,10 @@ void process_generator_thread() {
     pcb->PID = randPID;
     randPID++;
     strcpy(pcb->state,"WAITING");
-    pcb->priority = 1;
+    pcb->remainingTime = 2;
     pcb->next = NULL;
     addPCB(&myQueue, pcb);
     printf("Nuevo pcb creado: %d \n", pcb->PID);
-    printf("Pcb añadido last: %d \n", myQueue.last->PID);
-    printf("Pcb añadido first: %d \n", myQueue.first->PID);
 
 }
 
@@ -175,63 +240,48 @@ void *timer1(void *args) {
     }
 }
 
-// Cambio de contexto
-void cambio_contexto() {
-    int id, min = 1000;
 
-    // Recorrer los hilos
-    for (int i = 0; i < num_cpus; i++) {
-        for (int j = 0; j < num_cores; j++) {
-            for (int k = 0; k < num_threads; k++) {
-
-                
-                
-                // Si el hilo está ocupado y tiene menor prioridad
-                //if (CPUsMachine[i].cores[j].threads[k].process != NULL &&
-                //    CPUsMachine[i].cores[j].threads[k].process->priority < min) {
-                //  min = CPUsMachine[i].cores[j].threads[k].process->priority;
-                //    id = CPUsMachine[i].cores[j].threads[k].process->PID;
-                }
-            }
-        }
-    }
-
-    // Realizar acciones con el hilo seleccionado
-    // Por ejemplo, imprimir el proceso con menor prioridad
-    printf("Cambio de contexto: Proceso con PID %d \n", id);
-}
-
-// Scheduler round robin
+// Scheduler 
 void scheduler(){
     printf("Activado scheduler \n");
-    // struct Core* current_core;
-    // struct Thread* current_thread;
+
+    struct PCB *restarAux = myQueue.first;
+    while(restarAux != myQueue.last){
+        if (strcmp(restarAux->state, "RUNNING") == 0){
+            restarAux->remainingTime = restarAux->remainingTime - 1;
+            printf("Proceso: %d, Tiempo restante: %d \n", restarAux->PID, restarAux->remainingTime);
+        }
+        restarAux = restarAux->next;
+    }
 
     for (int i = 0; i < num_cpus; i++) {
         for (int j = 0; j < num_cores; j++) {
             for (int k = 0; k < num_threads; k++) {
-                printf("hola");
                 //Si el hilo esta libre se le asigna el pcb
-                // printf("El id de el thread es: %i \n", CPUsMachine[i].cores[j].threads[k].tid);
-                
                 if(CPUsMachine[i].cores[j].threads[k].process == NULL){
-                    printf("Hilo libre\n");
+                    printf("Hilo: %d, Proceso: NULL \n", CPUsMachine[i].cores[j].threads[k].tid);              
                     struct PCB *aux = myQueue.first;
                     struct PCB *salida = NULL;
                     while(aux != salida && strcmp(aux->state, "WAITING")!= 0){
-                        printf("Estado: %s", aux->state);
                         aux=aux->next;
                         salida = myQueue.first;
                     }
+                    printf("Estado: %s \n", aux->state);
                     if (aux != NULL && aux != salida){
                         strcpy(aux->state,"RUNNING");
                         CPUsMachine[i].cores[j].threads[k].process=aux;
-                        printf("Proceso %i añadido a hilo %i",aux->PID, CPUsMachine[i].cores[j].threads[k].tid);
+                        printf("Proceso %i añadido a hilo %i \n",aux->PID, CPUsMachine[i].cores[j].threads[k].tid);
                     }
                 }
+                //Si el hilo esta ocupado se mira a ver si el proceso a acabado
                 else{
-                    printf("Cambio de contexto\n");
-                    
+                    printf("Hilo: %d, Proceso: %d \n", CPUsMachine[i].cores[j].threads[k].tid, CPUsMachine[i].cores[j].threads[k].process->PID);              
+                    if (CPUsMachine[i].cores[j].threads[k].process->remainingTime < 1){
+                        deletePCB(&myQueue, CPUsMachine[i].cores[j].threads[k].process);
+                        printf ("Elimina proceso: %d \n", CPUsMachine[i].cores[j].threads[k].process->PID);
+                        CPUsMachine[i].cores[j].threads[k].process = NULL;
+
+                    }                    
                 }  
             }
         }
@@ -270,6 +320,12 @@ void *clock_thread() {
         pthread_cond_broadcast(&cond2);
         pthread_mutex_unlock(&mutex);
     }
+}
+
+
+void createPhysicalMemory(struct PhysicalMemory p){
+    for(int i = 0; i < MEM_SIZE; i++)
+        p.memory[i] = 0;
 }
 
 //MAIN
