@@ -1,11 +1,13 @@
 // clock_thread.c
 
+#include "define.h"
 #include <pthread.h>
 #include <unistd.h>
 
-extern pthread_mutex_t mutex;
-extern pthread_cond_t cond1, cond2;
-extern int done;
+pthread_mutex_t mutex;
+pthread_cond_t cond1, cond2;
+
+int done = 0;
 
 void *clock_thread() {
     while (1) {

@@ -1,3 +1,5 @@
+//main.c
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -12,164 +14,20 @@
 #define PageTable 4194304  // Posicion inicial pagina de tablas 2^22
 
 
-//Estrucuturas Necesarias
-
-struct MemoryManagement {
-    void* code;   // Puntero a la dirección virtual de comienzo del segmento de código.
-    void* data;   // Puntero a la dirección virtual de comienzo del segmento de datos.
-    void* pgb;    // Puntero a la dirección física de la correspondiente tabla de páginas.
-};
-
-struct PCB {
-    int PID;
-    char state[15];
-    int remainingTime;
-    int quantum;
-   // struct MemoryManagement mm;
-    struct PCB* next;
-};
-
-struct ProcessQueue {
-    struct PCB* first;
-    struct PCB* last;
-};
-
-struct Thread {
-    int tid;
-    struct PCB* process;
-    // struct MMU* mmu; //Traduccion las direcciones virtuales a direccciones fisicas
-    // void* ptbr;  // Registro apuntador a la tabla de páginas (PTBR)
-    // int RI; //Instruccion actual
-    // void* PC; //DIreccion de la proxima instruccion
-};
-
-struct Core {
-    int core_id;        
-    struct Thread* threads;
-};
-
-struct CPU {
-    int cpu_id;    
-    struct Core* cores;   
-};
-
-struct TLBEntry {
-    int virtualPageNumber;  // Número de página virtual
-    int frameNumber;        // Número de marco en memoria física
-    int valid;              // Bit de validez
-};
-
-struct MMU {
-    struct TLBEntry* tlb;
-};
-
-
-struct VirtualMemory {
-    char *memory;  // Puntero a la memoria virtual
-    size_t size;            // Tamaño total de la memoria
-};
-
-
 //Variables necesarias
 
-pthread_mutex_t mutex;
-pthread_cond_t cond1, cond2;
-int done = 0;
-
-
 struct ProcessQueue myQueue;
-int freeThreads;
-int waitingProcess = 0;
-int processActivated = 0;
 
 int num_cpus;    
 int num_cores;   
 int num_threads; 
 struct CPU* CPUsMachine; 
 
-int randPID = 0;
-
-int physicalMemory[MEM_SIZE];
-
  // Funciones necesarias
-
-void initializePhysicalMemory(){
-    for (int i = 0; i > MEM_SIZE; i++){
-        physicalMemory[i] = 0;
-    }
-}
 
 void initializeProcessQueue(struct ProcessQueue* myQueue){
     myQueue->first = NULL;
     myQueue->last = NULL;
-}
-
-void addPCB(struct ProcessQueue* myQueue, struct PCB* pcb){    
-
-    if(myQueue->first==NULL){
-        myQueue->first=pcb;
-        myQueue->last=pcb;
-    }else{
-        myQueue->last->next=pcb;
-        myQueue->last=pcb;
-        }
-
-    myQueue->last->next = myQueue->first;
-}
-
-void deletePCB(struct ProcessQueue* myQueue, struct PCB* pcb){    
-
-    if(myQueue->first != NULL && pcb != NULL){
-        if (pcb->next == pcb){
-            myQueue->first = NULL;
-            myQueue->last = NULL;
-
-        }else if (myQueue->first == pcb){
-            myQueue->first = pcb->next;
-            myQueue->last->next = myQueue->first;
-
-        }else {
-            struct PCB *aux = myQueue->first;
-            while (aux->next != pcb){
-                aux = aux->next;
-            }
-            if (aux->next == myQueue->last){
-                aux->next = myQueue->first;
-                myQueue->last = aux;
-                printf("ID: %d", myQueue->last->PID);
-            }else{
-                aux->next = pcb->next;
-            }
-        }
-        pcb->next = NULL;
-    }
-    else{
-        printf("Delete incorrecto");
-    }
-
-}
-
-void processGoLast(struct ProcessQueue* myQueue, struct PCB* pcb){
-    if(myQueue->first != NULL && pcb != NULL){
-        if (pcb->next != pcb){
-            if (myQueue->first == pcb){
-                myQueue->first = pcb->next;
-            }else {
-                struct PCB *aux = myQueue->first;
-                while (aux->next != pcb){
-                    aux = aux->next;
-                }
-                aux->next = pcb->next;
-                myQueue->last->next = pcb;
-                pcb->next = myQueue->first;
-            }
-            myQueue->last = pcb;
-        }else{
-            printf("El proceso es el ultimo, error");
-        }
-    }else{
-        printf("Pasar proceso a la ultima posicion, error");
-    }
 }
 
 
@@ -240,136 +98,6 @@ void printMachineInfo(struct CPU* CPUsMachine, int num_cpus, int num_cores, int 
             for (int k = 0; k < num_threads; k++) {
                 printf("Thread %d\n", CPUsMachine[i].cores[j].threads[k].tid);
             }
-        }
-    }
-}
-
-// Función para simular el Process Generator
-void process_generator_thread() {
-    printf("Process generator activado  \n");
-    waitingProcess++;
-    processActivated = 1;
-
-    //initializePhysicalMemory();
-
-    struct PCB* pcb = (struct PCB*)malloc(sizeof(struct PCB));
-    pcb->PID = randPID;
-    randPID++;
-    strcpy(pcb->state,"WAITING");
-    pcb->remainingTime = rand() % 10 + 1;
-    pcb->quantum = 5;
-    pcb->next = NULL;
-    addPCB(&myQueue, pcb);
-    printf("Nuevo pcb creado: %d \n", pcb->PID);
-}
-
-// Timer para el Process Generator
-void *timer1(void *args) {
-    int clk1 = 0;
-    int f1 = *((int *)args);
-    pthread_mutex_lock(&mutex);
-    while (1) {
-        done++;
-        clk1++;
-        pthread_cond_signal(&cond1);
-        pthread_cond_wait(&cond2, &mutex);
-        if (clk1 >= f1){
-            process_generator_thread();
-            clk1 = 0;
-
-        }
-    }
-}
-
-// Scheduler 
-void scheduler(){
-    if (processActivated == 1){
-        printf("Activado scheduler \n");
-        printf("Numero de hilos libres: %d \n", freeThreads);
-        printf("Numero de procesos esperando: %d \n", waitingProcess);
-        for (int i = 0; i < num_cpus; i++) {
-            for (int j = 0; j < num_cores; j++) {
-                for (int k = 0; k < num_threads; k++) {
-                    //Si el hilo esta libre se le asigna el pcb
-                    if(CPUsMachine[i].cores[j].threads[k].process == NULL && waitingProcess > 0){
-                        struct PCB *aux = myQueue.first;
-                        struct PCB *salida = NULL;
-                        while(aux != salida && strcmp(aux->state, "WAITING")!= 0){
-                            aux=aux->next;
-                            salida = myQueue.first;
-                        }
-                        if (aux != NULL && aux != salida){
-                            strcpy(aux->state,"RUNNING");
-                            CPUsMachine[i].cores[j].threads[k].process=aux;
-                            freeThreads--;
-                            waitingProcess--;
-                            printf("Proceso %i añadido a hilo %i \n",aux->PID, CPUsMachine[i].cores[j].threads[k].tid);
-                        }
-                    }
-                    //Si el hilo esta ocupado 
-                    else if (CPUsMachine[i].cores[j].threads[k].process != NULL){
-                        //Si el proceso ha acabado
-                        if (CPUsMachine[i].cores[j].threads[k].process->remainingTime == 0){
-                            deletePCB(&myQueue, CPUsMachine[i].cores[j].threads[k].process);
-                            printf ("Se elimina proceso: %d \n", CPUsMachine[i].cores[j].threads[k].process->PID);
-                            CPUsMachine[i].cores[j].threads[k].process = NULL;
-                            freeThreads++;
-                            k--;                         
-                            
-
-                        }
-                        //Si el quantum ha terminado, no hay hilos disponibles y hay procesos esperando
-                        else if (CPUsMachine[i].cores[j].threads[k].process->quantum <= 0 &&  waitingProcess > freeThreads){
-                            processGoLast(&myQueue, CPUsMachine[i].cores[j].threads[k].process);
-                            printf ("Se manda a la ultima posicion el proceso: %d \n", CPUsMachine[i].cores[j].threads[k].process->PID);
-                            CPUsMachine[i].cores[j].threads[k].process->quantum = 5;
-                            strcpy(CPUsMachine[i].cores[j].threads[k].process->state,"WAITING");
-                            CPUsMachine[i].cores[j].threads[k].process = NULL;
-                            freeThreads++;
-                            waitingProcess++;
-                            k--;                
-                        }
-                        
-                    }  
-                }
-            }
-        }
-
-        struct PCB *restarAux = myQueue.first;
-        if (restarAux != myQueue.last){
-            while(restarAux != myQueue.last){
-                if (strcmp(restarAux->state, "RUNNING") == 0){
-                    restarAux->remainingTime = restarAux->remainingTime - 1;
-                    restarAux->quantum = restarAux->quantum - 1;
-                    printf("Proceso: %d, Tiempo restante: %d  Quantum: %d \n", restarAux->PID, restarAux->remainingTime, restarAux->quantum);
-                }
-                restarAux = restarAux->next;
-            } 
-        }
-        if (restarAux != NULL && strcmp(restarAux->state, "RUNNING") == 0){
-            restarAux->remainingTime = restarAux->remainingTime - 1;
-            restarAux->quantum = restarAux->quantum - 1;
-            printf("Proceso: %d, Tiempo restante: %d  Quantum: %d \n", restarAux->PID, restarAux->remainingTime, restarAux->quantum);
-        }
-
-     
-    }
-}
-
- // Timer para el Scheduler
-void *timer2(void *args) {
-    int clk2 = 0;
-    int f2 = *((int *)args);
-    pthread_mutex_lock(&mutex);
-    while (1) {
-        done++;
-        clk2++;
-        pthread_cond_signal(&cond1);
-        pthread_cond_wait(&cond2, &mutex);
-        if (clk2 >= f2){
-            scheduler();
-            clk2 = 0;
-
         }
     }
 }
