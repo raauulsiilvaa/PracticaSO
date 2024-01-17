@@ -11,6 +11,8 @@ int num_cores;
 int num_threads; 
 
 int type_scheduler = 5;
+int max_process;
+
 
 struct CPU* CPUsMachine; 
 
@@ -96,15 +98,26 @@ void printMachineInfo(struct CPU* CPUsMachine, int num_cpus, int num_cores, int 
 
 int main(int argc, char *argv[]) {
 
-    if (argc != 7) {
-        printf("Uso: %s <num_cpus> <num_cores> <num_threads> <clk_process_generator> <clk_scheduler> <type_scheduler (0:FIFO, 1:SJF, 2:Robin Round)>\n", argv[0]);
+    if (argc < 7 || argc > 8) {
+        printf("Uso: %s <num_cpus> <num_cores> <num_threads> <clk_process_generator> <clk_scheduler> <type_scheduler (0:FIFO, 1:SJF, 2:Robin Round)> <(OPCIONAL) max_process>\n", argv[0]);
         return 1;
-        
-    }else if (atoi(argv[1]) <= 0 || atoi(argv[2]) <= 0 || atoi(argv[3]) <= 0 || atoi(argv[4]) <= 0 || atoi(argv[5]) <= 0 || (atoi(argv[6]) != 0 && atoi(argv[6]) != 1 && atoi(argv[6]) != 2)) {
-        printf("Todos los argumentos deben ser números positivos mayores que 0, menos el ultimo que debe ser 0, 1 o 2.\n");
-        return 1;
+    }   
+    if (argc == 7){
+        if (atoi(argv[1]) <= 0 || atoi(argv[2]) <= 0 || atoi(argv[3]) <= 0 || atoi(argv[4]) <= 0 || atoi(argv[5]) <= 0 || (atoi(argv[6]) != 0 && atoi(argv[6]) != 1 && atoi(argv[6]) != 2)) {
+        printf("Todos los argumentos deben ser números positivos mayores que 0, menos el type_scheduler(6) que debe ser 0, 1 o 2 \n");
+        return 2;
+        }
+        max_process = -1;
     }
-
+    if (argc == 8){
+        if (atoi(argv[1]) <= 0 || atoi(argv[2]) <= 0 || atoi(argv[3]) <= 0 || atoi(argv[4]) <= 0 || atoi(argv[5]) <= 0 || (atoi(argv[6]) != 0 && atoi(argv[6]) != 1 && atoi(argv[6]) != 2) || atoi(argv[7]) <= 0) {
+        printf("Todos los argumentos deben ser números positivos mayores que 0, menos el type_scheduler(6) que debe ser 0, 1 o 2\n");
+        return 3;
+        }
+        max_process = atoi(argv[7]);
+    }
+    
+    
     num_cpus = atoi(argv[1]);
     num_cores = atoi(argv[2]);
     num_threads = atoi(argv[3]);
@@ -113,7 +126,7 @@ int main(int argc, char *argv[]) {
     int frecuencia2 = atoi(argv[5]);
 
     type_scheduler = atoi(argv[6]);
-
+ 
     initializeProcessQueue(&myQueue);
 
     CPUsMachine = initializeMachine(); 

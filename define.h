@@ -80,6 +80,8 @@ extern struct ProcessQueue myQueue;
 extern int freeThreads;
 extern int waitingProcess;
 extern int processActivated;
+extern int max_process;
+
 
 extern int num_cpus;    
 extern int num_cores;   

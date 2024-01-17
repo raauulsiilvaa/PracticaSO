@@ -49,26 +49,33 @@ void addPCB(struct ProcessQueue* myQueue, struct PCB* pcb){
 
 // Función para simular el Process Generator Loader
 void process_generator_loader() {
+    if (max_process > 0 || max_process == -1){
+        printf("Process generator activado  \n");
+        struct PCB* pcb = (struct PCB*)malloc(sizeof(struct PCB));
+        pcb->PID = randPID;
+        randPID++;
+        strcpy(pcb->state,"WAITING");
+        pcb->remainingTime = rand() % 10 + 1;
+        pcb->quantum = 5;
+        pcb->next = NULL;
 
-    printf("Process generator activado  \n");
-    waitingProcess++;
-    struct PCB* pcb = (struct PCB*)malloc(sizeof(struct PCB));
-    pcb->PID = randPID;
-    randPID++;
-    strcpy(pcb->state,"WAITING");
-    pcb->remainingTime = rand() % 10 + 1;
-    pcb->quantum = 5;
-    pcb->next = NULL;
+        // Parte 3
+        // initializePhysicalMemory();
+        // loadProgram(filename);
+        // sprintf(filename, "prom/prog%03d.elf", randPID);
+        // printf("Filename: %s \n", filename);
 
-    // Parte 3
-    // initializePhysicalMemory();
-    // loadProgram(filename);
-    // sprintf(filename, "prom/prog%03d.elf", randPID);
-    // printf("Filename: %s \n", filename);
-
-    addPCB(&myQueue, pcb);
-    printf("Nuevo pcb creado: %d \n", pcb->PID);
-
+        addPCB(&myQueue, pcb);
+        printf("Nuevo pcb creado: %d \n", pcb->PID);
+        waitingProcess++;
+        if (max_process > 0) max_process--;
+    }
+    else if (max_process == 0){
+        if (myQueue.first == NULL){
+            printf("Se han ejecutado todos los procesos posibles ha crear \n");
+            exit(0);
+        }  
+    }
 }
 
 // Timer para el Process Generator
