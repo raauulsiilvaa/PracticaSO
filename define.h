@@ -7,6 +7,7 @@
 #include <time.h>
 #include <string.h>
 #include <signal.h>
+#include <math.h>
 
 #ifndef CLOCK_THREAD_H
 #define CLOCK_THREAD_H
