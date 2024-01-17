@@ -161,7 +161,8 @@ int main(int argc, char *argv[]) {
     pthread_cond_destroy(&cond2);
 
     freeMachine(CPUsMachine, num_cpus, num_cores);
-    printf("terminado");
+    
+    printf("Final");
 
     return 0;
 }

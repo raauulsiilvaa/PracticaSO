@@ -26,7 +26,6 @@ void deletePCB(struct ProcessQueue* myQueue, struct PCB* pcb){
             if (aux->next == myQueue->last){
                 aux->next = myQueue->first;
                 myQueue->last = aux;
-                printf("ID: %d", myQueue->last->PID);
             }else{
                 aux->next = pcb->next;
             }

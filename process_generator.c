@@ -50,7 +50,6 @@ void addPCB(struct ProcessQueue* myQueue, struct PCB* pcb){
 // Función para simular el Process Generator Loader
 void process_generator_loader() {
     if (max_process > 0 || max_process == -1){
-        printf("Process generator activado  \n");
         struct PCB* pcb = (struct PCB*)malloc(sizeof(struct PCB));
         pcb->PID = randPID;
         randPID++;
