@@ -30,7 +30,7 @@ struct PCB {
     char state[15]; //Estado del proceso
     int remainingTime; //Tiempo de duracion de proceso
     int quantum;    //Tiempo maximo del proceso si hay procesos esperando
-    // struct MemoryManagement mm; //Estructura con campos de la memoria (Parte 3)
+    struct MemoryManagement mm; //Estructura con campos de la memoria (Parte 3)
     struct PCB* next;   //Siguiente proceso 
 };
 

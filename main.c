@@ -22,6 +22,13 @@ void initializeProcessQueue(struct ProcessQueue* myQueue){
     myQueue->last = NULL;
 }
 
+//Funcion para inicializar la memoria fisica
+void initializePhysicalMemory(){
+    for (int i = 0; i > MEM_SIZE; i++){
+        physicalMemory[i] = 0;
+    }
+}
+
 //Funcion que inicializa la maquina con los cpus, cores y hilos
 struct CPU* initializeMachine() {
     // Asignar memoria para un array de CPUs
@@ -128,6 +135,7 @@ int main(int argc, char *argv[]) {
     type_scheduler = atoi(argv[6]);
  
     initializeProcessQueue(&myQueue);
+    // initializePhysicalMemory();
 
     CPUsMachine = initializeMachine(); 
 
@@ -161,7 +169,7 @@ int main(int argc, char *argv[]) {
     pthread_cond_destroy(&cond2);
 
     freeMachine(CPUsMachine, num_cpus, num_cores);
-    
+
     printf("Final");
 
     return 0;

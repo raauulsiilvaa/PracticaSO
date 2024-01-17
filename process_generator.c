@@ -7,13 +7,6 @@ int randPID = 0;
 int physicalMemory[MEM_SIZE];
 char filename[20] = "prom/prog000.elf";
 
-//Funcion para inicializar la memoria fisica
-void initializePhysicalMemory(){
-    for (int i = 0; i > MEM_SIZE; i++){
-        physicalMemory[i] = 0;
-    }
-}
-
 //Funcion para añadir PCB a la cola
 void addPCB(struct ProcessQueue* myQueue, struct PCB* pcb){    
 
@@ -32,20 +25,33 @@ void addPCB(struct ProcessQueue* myQueue, struct PCB* pcb){
 // void processInstructionLine(const char* line) {
 // }
 
-// //Funcion para leer programa
-// void loadProgram(const char* filename) {
-//     FILE *file = fopen(filename, "r");
+//Funcion para leer programa
+void loadProgram(struct PCB* pcb, const char* filename) {
+    char direction_text[8]; 
+    char direction_data[8];
+    char line[8];
 
-//     if (file == NULL) {
-//         perror("Error al abrir el archivo");
-//         return;
-//     }
+    FILE* file = fopen(filename, "r");
 
-//     char direccion_text[8]; 
-//     char direccion_data[8];
+    if (file == NULL) {
+        printf("Error al abrir el archivo %s \n", filename);
+        return ;
+    }
 
-// }
-
+    int k = 0;
+    while(fgets(line, sizeof(line), file) != NULL){
+        if (k == 0){
+            sscanf(line, ".text %s", direction_text);
+            pcb->mm.code = atoi(direction_text);
+        }
+        if(k == 1){
+            sscanf(line, ".data %s", direction_data);
+            pcb->mm.data = atoi(direction_data);
+        }
+        k++;
+    }
+    fclose(file);
+}
 
 // Función para simular el Process Generator Loader
 void process_generator_loader() {
@@ -59,10 +65,8 @@ void process_generator_loader() {
         pcb->next = NULL;
 
         // Parte 3
-        // initializePhysicalMemory();
-        // loadProgram(filename);
-        // sprintf(filename, "prom/prog%03d.elf", randPID);
-        // printf("Filename: %s \n", filename);
+        loadProgram(pcb, filename);
+        sprintf(filename, "prom/prog%03d.elf", randPID);
 
         addPCB(&myQueue, pcb);
         printf("Nuevo pcb creado: %d \n", pcb->PID);
