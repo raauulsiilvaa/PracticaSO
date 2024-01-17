@@ -109,6 +109,10 @@ int main(int argc, char *argv[]) {
     if (argc != 6) {
         printf("Uso: %s <num_cpus> <num_cores> <num_threads> <clk_process_generator> <clk_scheduler>\n", argv[0]);
         return 1;
+        
+    }else if (atoi(argv[1]) <= 0 || atoi(argv[2]) <= 0 || atoi(argv[3]) <= 0 || atoi(argv[4]) <= 0 || atoi(argv[5]) <= 0) {
+        printf("Todos los argumentos deben ser números positivos mayores que 0.\n");
+        return 1;
     }
 
     num_cpus = atoi(argv[1]);
