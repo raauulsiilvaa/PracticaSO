@@ -32,7 +32,7 @@ void process_generator_thread() {
     waitingProcess++;
     processActivated = 1;
 
-    //initializePhysicalMemory();
+    initializePhysicalMemory();
 
     struct PCB* pcb = (struct PCB*)malloc(sizeof(struct PCB));
     pcb->PID = randPID;

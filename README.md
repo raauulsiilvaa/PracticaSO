@@ -1,5 +1,5 @@
 Para compilar:
-gcc pthread.h main.c clock_thread.c scheduler_timer.c process_generator.c -o main
+gcc -pthread main.c clock_thread.c scheduler_timer.c process_generator.c -o main
 
 Para ejecutar:
 <num_cpu><num_cores><num_thread><frecuencia_process_generator><frecuencia_scheduler>

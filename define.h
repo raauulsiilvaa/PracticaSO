@@ -20,18 +20,18 @@
 //Estructuras 
 
 struct MemoryManagement {
-    void* code;   // Puntero a la dirección virtual de comienzo del segmento de código.
-    void* data;   // Puntero a la dirección virtual de comienzo del segmento de datos.
-    void* pgb;    // Puntero a la dirección física de la correspondiente tabla de páginas.
+    int code;   // Puntero a la dirección virtual de comienzo del segmento de código.
+    int data;   // Puntero a la dirección virtual de comienzo del segmento de datos.
+    int pgb;    // Puntero a la dirección física de la correspondiente tabla de páginas.
 };
 
 struct PCB {
-    int PID;
-    char state[15];
-    int remainingTime;
-    int quantum;
-   // struct MemoryManagement mm;
-    struct PCB* next;
+    int PID;    //Numero de proceso
+    char state[15]; //Estado del proceso
+    int remainingTime; //Tiempo de duracion de proceso
+    int quantum;    //Tiempo maximo del proceso si hay procesos esperando
+    struct MemoryManagement mm; //Estructura con campos de la memoria
+    struct PCB* next;   //Siguiente proceso 
 };
 
 struct ProcessQueue {
@@ -40,22 +40,22 @@ struct ProcessQueue {
 };
 
 struct Thread {
-    int tid;
-    struct PCB* process;
-    // struct MMU* mmu; //Traduccion las direcciones virtuales a direccciones fisicas
-    // void* ptbr;  // Registro apuntador a la tabla de páginas (PTBR)
-    // int RI; //Instruccion actual
-    // void* PC; //DIreccion de la proxima instruccion
+    int tid;    //Numero de hilo
+    struct PCB* process; //Proceso asignado al hilo
+    struct MMU* mmu; //Traduccion las direcciones virtuales a direccciones fisicas
+    int ptbr;  // Registro apuntador a la tabla de páginas (PTBR)
+    int RI; //Instruccion actual
+    int PC; //DIreccion de la proxima instruccion
 };
 
 struct Core {
-    int core_id;        
-    struct Thread* threads;
+    int core_id;    //Numero de core     
+    struct Thread* threads; //Hilos dentro del core
 };
 
 struct CPU {
-    int cpu_id;    
-    struct Core* cores;   
+    int cpu_id;    //Numero de cpu
+    struct Core* cores;   //Cores dentro del cpu
 };
 
 struct TLBEntry {
@@ -65,13 +65,9 @@ struct TLBEntry {
 };
 
 struct MMU {
-    struct TLBEntry* tlb;
+    struct TLBEntry* tlb; //Tabla de paginas
 };
 
-struct VirtualMemory {
-    char *memory;  // Puntero a la memoria virtual
-    size_t size;            // Tamaño total de la memoria
-};
 
 //Variables
 
