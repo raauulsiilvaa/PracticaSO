@@ -5,13 +5,16 @@
 //Variables
 int randPID = 0;
 int physicalMemory[MEM_SIZE];
+char filename[20] = "prom/prog000.elf";
 
+//Funcion para inicializar la memoria fisica
 void initializePhysicalMemory(){
     for (int i = 0; i > MEM_SIZE; i++){
         physicalMemory[i] = 0;
     }
 }
 
+//Funcion para añadir PCB a la cola
 void addPCB(struct ProcessQueue* myQueue, struct PCB* pcb){    
 
     if(myQueue->first==NULL){
@@ -25,15 +28,30 @@ void addPCB(struct ProcessQueue* myQueue, struct PCB* pcb){
     myQueue->last->next = myQueue->first;
 }
 
+// // Función para procesar una línea de instrucción del programa
+// void processInstructionLine(const char* line) {
+// }
 
-// Función para simular el Process Generator
-void process_generator_thread() {
+// //Funcion para leer programa
+// void loadProgram(const char* filename) {
+//     FILE *file = fopen(filename, "r");
+
+//     if (file == NULL) {
+//         perror("Error al abrir el archivo");
+//         return;
+//     }
+
+//     char direccion_text[8]; 
+//     char direccion_data[8];
+
+// }
+
+
+// Función para simular el Process Generator Loader
+void process_generator_loader() {
+
     printf("Process generator activado  \n");
     waitingProcess++;
-    processActivated = 1;
-
-    initializePhysicalMemory();
-
     struct PCB* pcb = (struct PCB*)malloc(sizeof(struct PCB));
     pcb->PID = randPID;
     randPID++;
@@ -41,8 +59,16 @@ void process_generator_thread() {
     pcb->remainingTime = rand() % 10 + 1;
     pcb->quantum = 5;
     pcb->next = NULL;
+
+    // Parte 3
+    // initializePhysicalMemory();
+    // loadProgram(filename);
+    // sprintf(filename, "prom/prog%03d.elf", randPID);
+    // printf("Filename: %s \n", filename);
+
     addPCB(&myQueue, pcb);
     printf("Nuevo pcb creado: %d \n", pcb->PID);
+
 }
 
 // Timer para el Process Generator
@@ -56,7 +82,7 @@ void *timer1(void *args) {
         pthread_cond_signal(&cond1);
         pthread_cond_wait(&cond2, &mutex);
         if (clk1 >= f1){
-            process_generator_thread();
+            process_generator_loader();
             clk1 = 0;
 
         }

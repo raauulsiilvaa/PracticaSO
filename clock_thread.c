@@ -7,6 +7,7 @@ pthread_cond_t cond1, cond2;
 
 int done = 0;
 
+//Funcion clock que controla el mutex 
 void *clock_thread() {
     while (1) {
         usleep(200000);

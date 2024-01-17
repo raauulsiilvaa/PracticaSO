@@ -9,16 +9,18 @@ struct ProcessQueue myQueue;
 int num_cpus;    
 int num_cores;   
 int num_threads; 
+
+int type_scheduler = 5;
+
 struct CPU* CPUsMachine; 
 
- // Funciones necesarias
-
+//Funcion que inicializa la lista de pcb (procesos)
 void initializeProcessQueue(struct ProcessQueue* myQueue){
     myQueue->first = NULL;
     myQueue->last = NULL;
 }
 
-
+//Funcion que inicializa la maquina con los cpus, cores y hilos
 struct CPU* initializeMachine() {
     // Asignar memoria para un array de CPUs
     CPUsMachine = (struct CPU*)malloc(num_cpus * sizeof(struct CPU));
@@ -94,12 +96,12 @@ void printMachineInfo(struct CPU* CPUsMachine, int num_cpus, int num_cores, int 
 
 int main(int argc, char *argv[]) {
 
-    if (argc != 6) {
-        printf("Uso: %s <num_cpus> <num_cores> <num_threads> <clk_process_generator> <clk_scheduler>\n", argv[0]);
+    if (argc != 7) {
+        printf("Uso: %s <num_cpus> <num_cores> <num_threads> <clk_process_generator> <clk_scheduler> <type_scheduler (0:FIFO, 1:SJF, 2:Robin Round)>\n", argv[0]);
         return 1;
         
-    }else if (atoi(argv[1]) <= 0 || atoi(argv[2]) <= 0 || atoi(argv[3]) <= 0 || atoi(argv[4]) <= 0 || atoi(argv[5]) <= 0) {
-        printf("Todos los argumentos deben ser números positivos mayores que 0.\n");
+    }else if (atoi(argv[1]) <= 0 || atoi(argv[2]) <= 0 || atoi(argv[3]) <= 0 || atoi(argv[4]) <= 0 || atoi(argv[5]) <= 0 || (atoi(argv[6]) != 0 && atoi(argv[6]) != 1 && atoi(argv[6]) != 2)) {
+        printf("Todos los argumentos deben ser números positivos mayores que 0, menos el ultimo que debe ser 0, 1 o 2.\n");
         return 1;
     }
 
@@ -109,6 +111,8 @@ int main(int argc, char *argv[]) {
 
     int frecuencia1 = atoi(argv[4]);
     int frecuencia2 = atoi(argv[5]);
+
+    type_scheduler = atoi(argv[6]);
 
     initializeProcessQueue(&myQueue);
 

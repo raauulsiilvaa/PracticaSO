@@ -17,7 +17,7 @@
 
 #include <pthread.h>
 
-//Estructuras 
+//Estructuras
 
 struct MemoryManagement {
     int code;   // Puntero a la dirección virtual de comienzo del segmento de código.
@@ -30,7 +30,7 @@ struct PCB {
     char state[15]; //Estado del proceso
     int remainingTime; //Tiempo de duracion de proceso
     int quantum;    //Tiempo maximo del proceso si hay procesos esperando
-    struct MemoryManagement mm; //Estructura con campos de la memoria
+    // struct MemoryManagement mm; //Estructura con campos de la memoria (Parte 3)
     struct PCB* next;   //Siguiente proceso 
 };
 
@@ -42,10 +42,11 @@ struct ProcessQueue {
 struct Thread {
     int tid;    //Numero de hilo
     struct PCB* process; //Proceso asignado al hilo
-    struct MMU* mmu; //Traduccion las direcciones virtuales a direccciones fisicas
-    int ptbr;  // Registro apuntador a la tabla de páginas (PTBR)
-    int RI; //Instruccion actual
-    int PC; //DIreccion de la proxima instruccion
+    //Parte 3
+    // struct MMU* mmu; //Traduccion las direcciones virtuales a direccciones fisicas
+    // int ptbr;  // Registro apuntador a la tabla de páginas (PTBR)
+    // int RI; //Instruccion actual
+    // int PC; //DIreccion de la proxima instruccion
 };
 
 struct Core {
@@ -83,6 +84,8 @@ extern int processActivated;
 extern int num_cpus;    
 extern int num_cores;   
 extern int num_threads; 
+extern int type_scheduler;
+
 extern struct CPU* CPUsMachine; 
 
 extern int randPID;
@@ -94,8 +97,9 @@ extern int physicalMemory[];
 void *clock_thread();
 void *timer1(void *args);
 void *timer2(void *args);
-void scheduler();
-void process_generator_thread();
+void scheduler_RobinRound();
+void scheduler_FIFO();
+void process_generator_loader();
 void addPCB(struct ProcessQueue* myQueue, struct PCB* pcb);
 void deletePCB(struct ProcessQueue* myQueue, struct PCB* pcb);
 void processGoLast(struct ProcessQueue* myQueue, struct PCB* pcb);
