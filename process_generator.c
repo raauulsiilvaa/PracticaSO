@@ -1,15 +1,6 @@
 //process_generator.c
 
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <pthread.h>
-#include <unistd.h>
-#include <time.h>
-#include <string.h>
-#include <signal.h>
 #include "define.h"
-
 
 //Variables
 int randPID = 0;

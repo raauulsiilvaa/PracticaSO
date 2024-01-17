@@ -1,13 +1,6 @@
 // scheduler_timer.c
 
 #include "define.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <pthread.h>
-#include <unistd.h>
-#include <time.h>
-#include <string.h>
-#include <signal.h>
 
 //Variables
 int freeThreads;

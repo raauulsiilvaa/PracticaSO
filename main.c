@@ -1,18 +1,6 @@
 //main.c
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <pthread.h>
-#include <unistd.h>
-#include <time.h>
-#include <string.h>
-#include <signal.h>
 #include "define.h" 
-
-#define MEM_SIZE 16777216   // Tamaño total de la memoria física (2^24 bytes)
-#define WORD_SIZE 4         // Tamaño de una palabra en bytes
-#define PageTable 4194304  // Posicion inicial pagina de tablas 2^22
-
 
 //Variables necesarias
 

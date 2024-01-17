@@ -1,8 +1,6 @@
 // clock_thread.c
 
 #include "define.h"
-#include <pthread.h>
-#include <unistd.h>
 
 pthread_mutex_t mutex;
 pthread_cond_t cond1, cond2;

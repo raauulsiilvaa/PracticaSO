@@ -1,5 +1,13 @@
 // define.h
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <time.h>
+#include <string.h>
+#include <signal.h>
+
 #ifndef CLOCK_THREAD_H
 #define CLOCK_THREAD_H
 
